@@ -170,14 +170,6 @@ netplotter/
 
 ---
 
-## Tests
-
-```bash
-go test ./internal/...
-```
-
----
-
 ## License
 
 MIT
