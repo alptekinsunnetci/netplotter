@@ -59,6 +59,11 @@ type Config struct {
 	ExportInterval time.Duration
 	DiffFile       string
 
+	// IPv6
+	UseIPv6    bool   // force IPv6 (auto-detect from AAAA if false)
+	IPv6Only   bool   // fail if target has no IPv6 address
+	IPv6Format string // "compact" or "full"
+
 	// Display
 	ShowAll   bool // show hops that don't respond
 	PanelSort string
@@ -126,6 +131,10 @@ func Parse() (*Config, error) {
 	flag.StringVar(&cfg.ExportJSON, "export-json", "", "Export results to JSON file (empty = disabled)")
 	flag.StringVar(&cfg.ExportCSV, "export-csv", "", "Export results to CSV file (empty = disabled)")
 	flag.StringVar(&cfg.DiffFile, "diff-file", "", "Compare against a previous JSON export (optional)")
+
+	flag.BoolVar(&cfg.UseIPv6, "ipv6", false, "Use IPv6 (auto-detect from AAAA record if false)")
+	flag.BoolVar(&cfg.IPv6Only, "ipv6-only", false, "Fail if target has no IPv6 address")
+	flag.StringVar(&cfg.IPv6Format, "ipv6-format", "compact", "IPv6 address format: compact, full")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "netplotter - Real-time network path monitoring tool\n\n")
@@ -256,6 +265,12 @@ func (c *Config) Validate() error {
 		// valid
 	default:
 		return fmt.Errorf("protocol must be one of: icmp, tcp, udp")
+	}
+	switch c.IPv6Format {
+	case "compact", "full":
+		// valid
+	default:
+		return fmt.Errorf("ipv6-format must be one of: compact, full")
 	}
 	return nil
 }

@@ -26,9 +26,29 @@ import (
 type targetState struct {
 	name     string
 	ip       net.IP
+	isIPv6   bool
 	session  *metrics.Session
 	runner   *traceroute.Runner
 	resolver *dns.Resolver
+}
+
+type KeyCommand int
+
+const (
+	KeyQuit KeyCommand = iota
+	KeyPause
+	KeySortToggle
+	KeyZoomIn
+	KeyZoomOut
+	KeyReset
+	KeyViewToggle
+)
+
+type UIState struct {
+	Paused    bool
+	SortMode  string // "target", "loss", "avg"
+	ViewMode  string // "all", "avg", "loss"
+	ZoomLevel int
 }
 
 func main() {
@@ -37,14 +57,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error: %v\n\n", err)
 		os.Exit(1)
 	}
-
-	// Build prober (ICMP preferred, falls back to TCP)
-	prober, err := probe.New(cfg)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %v\n", err)
-		os.Exit(1)
-	}
-	defer prober.Close()
 
 	var baseline *diff.Baseline
 	if cfg.DiffFile != "" {
@@ -58,22 +70,19 @@ func main() {
 
 	states := make([]*targetState, 0, len(cfg.Targets))
 	for _, target := range cfg.Targets {
-		targetIP, rerr := traceroute.ResolveTarget(target)
+		targetIP, rerr := traceroute.ResolveTargetWithOptions(target, cfg.UseIPv6, cfg.IPv6Only)
 		if rerr != nil {
 			fmt.Fprintf(os.Stderr, "warn: resolve %q: %v\n", target, rerr)
 			continue
 		}
 
-		trOpts := traceroute.Options{
-			MaxHops: cfg.MaxHops,
-			Timeout: cfg.Timeout,
-			Retries: 2,
-		}
+		isIPv6 := targetIP.To4() == nil
+
 		states = append(states, &targetState{
 			name:    target,
 			ip:      targetIP,
+			isIPv6:  isIPv6,
 			session: metrics.NewSession(targetIP, cfg.BufferSize),
-			runner:  traceroute.NewRunner(prober, targetIP, trOpts),
 		})
 	}
 
@@ -81,6 +90,16 @@ func main() {
 		fmt.Fprintln(os.Stderr, "error: no valid targets")
 		os.Exit(1)
 	}
+
+	useIPv6 := states[0].isIPv6
+
+	var prober probe.Prober
+	prober, err = probe.NewWithIPv6(cfg, useIPv6)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+	defer prober.Close()
 
 	if len(states) == 1 {
 		fmt.Printf("Starting netplotter — target: %s (%s) via %s\n",
@@ -186,17 +205,26 @@ func main() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	quitCh := make(chan struct{}, 1)
+	cmdCh := make(chan KeyCommand, 10)
+
+	uiState := &UIState{
+		Paused:    false,
+		SortMode:  cfg.PanelSort,
+		ViewMode:  cfg.ViewMode,
+		ZoomLevel: 0,
+	}
 
 	if term.IsTerminal(int(os.Stdin.Fd())) {
 		state, err := term.MakeRaw(int(os.Stdin.Fd()))
 		if err == nil {
 			defer term.Restore(int(os.Stdin.Fd()), state)
-			go watchQuitKey(quitCh)
+			go watchKeyboard(quitCh, cmdCh)
 		}
 	}
 
 	var wg sync.WaitGroup
 	var seqCounter uint32
+	var paused atomic.Bool
 
 	// ── Probe loop ───────────────────────────────────────────────────────────
 	for _, st := range states {
@@ -211,6 +239,9 @@ func main() {
 				case <-ctx.Done():
 					return
 				case <-ticker.C:
+					if paused.Load() {
+						continue
+					}
 					runProbeRound(ctx, prober, state.session, state.ip, cfg, &seqCounter)
 				}
 			}
@@ -287,6 +318,15 @@ func main() {
 						st.session.RecordRouteChange()
 					}
 					snaps := st.session.Snapshot()
+					if uiState.ZoomLevel > 0 {
+						showCount := len(snaps) - uiState.ZoomLevel
+						if showCount < 1 {
+							showCount = 1
+						}
+						if showCount < len(snaps) {
+							snaps = snaps[:showCount]
+						}
+					}
 					applyDiff(snaps, baseline, st.ip)
 					sum := st.session.Summary()
 					loss, avg, ok := panelMetrics(snaps)
@@ -296,6 +336,9 @@ func main() {
 							Snaps:        snaps,
 							Summary:      sum,
 							RouteChanged: routeChanged,
+							Paused:       uiState.Paused,
+							SortMode:     uiState.SortMode,
+							ViewMode:     uiState.ViewMode,
 						},
 						Loss:  loss,
 						Avg:   avg,
@@ -303,8 +346,56 @@ func main() {
 						Order: i,
 					})
 				}
-				panels := sortPanels(views, cfg.PanelSort)
+				panels := sortPanels(views, uiState.SortMode)
 				rend.Render(panels)
+			}
+		}
+	}()
+
+	// ── Command handler loop ──────────────────────────────────────────────────
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case cmd := <-cmdCh:
+				switch cmd {
+				case KeyPause:
+					uiState.Paused = !uiState.Paused
+					paused.Store(uiState.Paused)
+				case KeySortToggle:
+					switch uiState.SortMode {
+					case "target":
+						uiState.SortMode = "loss"
+					case "loss":
+						uiState.SortMode = "avg"
+					default:
+						uiState.SortMode = "target"
+					}
+				case KeyZoomIn:
+					if uiState.ZoomLevel < 10 {
+						uiState.ZoomLevel++
+					}
+				case KeyZoomOut:
+					if uiState.ZoomLevel > 0 {
+						uiState.ZoomLevel--
+					}
+				case KeyReset:
+					for _, st := range states {
+						st.session.Reset()
+					}
+				case KeyViewToggle:
+					switch uiState.ViewMode {
+					case "all":
+						uiState.ViewMode = "avg"
+					case "avg":
+						uiState.ViewMode = "loss"
+					default:
+						uiState.ViewMode = "all"
+					}
+				}
 			}
 		}
 	}()
@@ -491,18 +582,50 @@ func panelTitle(name string, ip net.IP) string {
 }
 
 func watchQuitKey(quitCh chan<- struct{}) {
+	watchKeyboard(quitCh, nil)
+}
+
+func watchKeyboard(quitCh chan<- struct{}, cmdCh chan<- KeyCommand) {
 	buf := make([]byte, 1)
 	for {
 		_, err := os.Stdin.Read(buf)
 		if err != nil {
 			return
 		}
-		if buf[0] == 'q' || buf[0] == 'Q' {
-			select {
-			case quitCh <- struct{}{}:
-			default:
+		c := buf[0]
+		switch c {
+		case 'q', 'Q':
+			if quitCh != nil {
+				select {
+				case quitCh <- struct{}{}:
+				default:
+				}
 			}
 			return
+		case 'p', 'P':
+			if cmdCh != nil {
+				cmdCh <- KeyPause
+			}
+		case 's', 'S':
+			if cmdCh != nil {
+				cmdCh <- KeySortToggle
+			}
+		case '+', '=':
+			if cmdCh != nil {
+				cmdCh <- KeyZoomIn
+			}
+		case '-', '_':
+			if cmdCh != nil {
+				cmdCh <- KeyZoomOut
+			}
+		case 'r', 'R':
+			if cmdCh != nil {
+				cmdCh <- KeyReset
+			}
+		case 'v', 'V':
+			if cmdCh != nil {
+				cmdCh <- KeyViewToggle
+			}
 		}
 	}
 }

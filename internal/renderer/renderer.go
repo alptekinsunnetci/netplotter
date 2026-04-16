@@ -11,6 +11,9 @@ type Panel struct {
 	Snaps        []metrics.HopSnapshot
 	Summary      metrics.SessionSummary
 	RouteChanged bool
+	Paused       bool
+	SortMode     string
+	ViewMode     string
 }
 
 // Renderer is implemented by anything that can display session data.
