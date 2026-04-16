@@ -200,6 +200,15 @@ func main() {
 			defer ce.Close()
 		}
 	}
+	if cfg.ExportTXT != "" {
+		te, err2 := storage.NewTXTExporter(cfg.ExportTXT)
+		if err2 != nil {
+			fmt.Fprintf(os.Stderr, "warn: %v\n", err2)
+		} else {
+			exporters = append(exporters, te)
+			defer te.Close()
+		}
+	}
 
 	// ── Signal handling ──────────────────────────────────────────────────────
 	sigCh := make(chan os.Signal, 1)

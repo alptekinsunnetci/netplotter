@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -56,6 +57,7 @@ type Config struct {
 	// Export
 	ExportJSON     string
 	ExportCSV      string
+	ExportTXT      string
 	ExportInterval time.Duration
 	DiffFile       string
 
@@ -85,6 +87,19 @@ const (
 	DefaultCriticalLoss    = 0.20
 	DefaultExportInterval  = 10 * time.Second
 )
+
+// DesktopDir returns the path to the user's Desktop directory, cross-platform.
+func DesktopDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		home = "."
+	}
+	desktop := filepath.Join(home, "Desktop")
+	if _, err := os.Stat(desktop); err == nil {
+		return desktop
+	}
+	return home
+}
 
 // Parse parses CLI flags and returns a Config
 func Parse() (*Config, error) {
@@ -128,8 +143,9 @@ func Parse() (*Config, error) {
 	flag.StringVar(&cfg.PanelSort, "panel-sort", "target", "Panel sort: target, loss, avg")
 	flag.StringVar(&cfg.ViewMode, "view", "all", "View mode: avg, loss, all")
 
-	flag.StringVar(&cfg.ExportJSON, "export-json", "", "Export results to JSON file (empty = disabled)")
-	flag.StringVar(&cfg.ExportCSV, "export-csv", "", "Export results to CSV file (empty = disabled)")
+	flag.StringVar(&cfg.ExportJSON, "export-json", "", "Export results to JSON file (empty = disabled, \"desktop\" = ~/Desktop/netplotter.json)")
+	flag.StringVar(&cfg.ExportCSV, "export-csv", "", "Export results to CSV file (empty = disabled, \"desktop\" = ~/Desktop/netplotter.csv)")
+	flag.StringVar(&cfg.ExportTXT, "export-txt", "", "Export results to TXT file (empty = disabled, \"desktop\" = ~/Desktop/netplotter.txt)")
 	flag.StringVar(&cfg.DiffFile, "diff-file", "", "Compare against a previous JSON export (optional)")
 
 	flag.BoolVar(&cfg.UseIPv6, "ipv6", false, "Use IPv6 (auto-detect from AAAA record if false)")
@@ -147,7 +163,8 @@ func Parse() (*Config, error) {
 		fmt.Fprintf(os.Stderr, "  netplotter --targets 8.8.8.8,1.1.1.1\n")
 		fmt.Fprintf(os.Stderr, "  netplotter --target google.com --protocol tcp --port 443\n")
 		fmt.Fprintf(os.Stderr, "  netplotter --target 1.1.1.1 --interval 500 --max-hops 20\n")
-		fmt.Fprintf(os.Stderr, "  netplotter --target 8.8.8.8 --export-json /tmp/results.json\n")
+		fmt.Fprintf(os.Stderr, "  netplotter --target 8.8.8.8 --export-json desktop\n")
+		fmt.Fprintf(os.Stderr, "  netplotter --target 8.8.8.8 --export-csv desktop --export-txt desktop\n")
 	}
 
 	flag.Parse()
@@ -215,6 +232,17 @@ func Parse() (*Config, error) {
 	cfg.WarnLatency = time.Duration(warnMs) * time.Millisecond
 	cfg.CriticalLatency = time.Duration(critMs) * time.Millisecond
 	cfg.ExportInterval = time.Duration(exportIntervalMs) * time.Millisecond
+
+	desktop := DesktopDir()
+	if cfg.ExportJSON == "desktop" {
+		cfg.ExportJSON = filepath.Join(desktop, "netplotter.json")
+	}
+	if cfg.ExportCSV == "desktop" {
+		cfg.ExportCSV = filepath.Join(desktop, "netplotter.csv")
+	}
+	if cfg.ExportTXT == "desktop" {
+		cfg.ExportTXT = filepath.Join(desktop, "netplotter.txt")
+	}
 
 	return cfg, cfg.Validate()
 }
