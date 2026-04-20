@@ -12,14 +12,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alptekinsunnetci/netplotter/internal/config"
-	"github.com/alptekinsunnetci/netplotter/internal/diff"
-	"github.com/alptekinsunnetci/netplotter/internal/dns"
-	"github.com/alptekinsunnetci/netplotter/internal/metrics"
-	"github.com/alptekinsunnetci/netplotter/internal/probe"
-	"github.com/alptekinsunnetci/netplotter/internal/renderer"
-	"github.com/alptekinsunnetci/netplotter/internal/storage"
-	"github.com/alptekinsunnetci/netplotter/internal/traceroute"
+	"github.com/TRNOG/rp/internal/config"
+	"github.com/TRNOG/rp/internal/diff"
+	"github.com/TRNOG/rp/internal/dns"
+	"github.com/TRNOG/rp/internal/metrics"
+	"github.com/TRNOG/rp/internal/probe"
+	"github.com/TRNOG/rp/internal/renderer"
+	"github.com/TRNOG/rp/internal/storage"
+	"github.com/TRNOG/rp/internal/traceroute"
 	"golang.org/x/term"
 )
 
@@ -102,10 +102,10 @@ func main() {
 	defer prober.Close()
 
 	if len(states) == 1 {
-		fmt.Printf("Starting netplotter — target: %s (%s) via %s\n",
+		fmt.Printf("Starting rp — target: %s (%s) via %s\n",
 			states[0].name, states[0].ip, prober.Name())
 	} else {
-		fmt.Printf("Starting netplotter — %d targets via %s\n", len(states), prober.Name())
+		fmt.Printf("Starting rp — %d targets via %s\n", len(states), prober.Name())
 	}
 
 	// Use a shorter timeout for the initial parallel traceroute so the UI

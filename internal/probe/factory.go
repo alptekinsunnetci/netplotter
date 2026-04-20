@@ -5,7 +5,7 @@ package probe
 import (
 	"fmt"
 
-	"github.com/alptekinsunnetci/netplotter/internal/config"
+	"github.com/TRNOG/rp/internal/config"
 )
 
 func New(cfg *config.Config) (Prober, error) {

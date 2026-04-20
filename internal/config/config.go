@@ -143,9 +143,9 @@ func Parse() (*Config, error) {
 	flag.StringVar(&cfg.PanelSort, "panel-sort", "target", "Panel sort: target, loss, avg")
 	flag.StringVar(&cfg.ViewMode, "view", "all", "View mode: avg, loss, all")
 
-	flag.StringVar(&cfg.ExportJSON, "export-json", "", "Export results to JSON file (empty = disabled, \"desktop\" = ~/Desktop/netplotter.json)")
-	flag.StringVar(&cfg.ExportCSV, "export-csv", "", "Export results to CSV file (empty = disabled, \"desktop\" = ~/Desktop/netplotter.csv)")
-	flag.StringVar(&cfg.ExportTXT, "export-txt", "", "Export results to TXT file (empty = disabled, \"desktop\" = ~/Desktop/netplotter.txt)")
+	flag.StringVar(&cfg.ExportJSON, "export-json", "", "Export results to JSON file (empty = disabled, \"desktop\" = ~/Desktop/rp.json)")
+	flag.StringVar(&cfg.ExportCSV, "export-csv", "", "Export results to CSV file (empty = disabled, \"desktop\" = ~/Desktop/rp.csv)")
+	flag.StringVar(&cfg.ExportTXT, "export-txt", "", "Export results to TXT file (empty = disabled, \"desktop\" = ~/Desktop/rp.txt)")
 	flag.StringVar(&cfg.DiffFile, "diff-file", "", "Compare against a previous JSON export (optional)")
 
 	flag.BoolVar(&cfg.UseIPv6, "ipv6", false, "Use IPv6 (auto-detect from AAAA record if false)")
@@ -153,18 +153,18 @@ func Parse() (*Config, error) {
 	flag.StringVar(&cfg.IPv6Format, "ipv6-format", "compact", "IPv6 address format: compact, full")
 
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "netplotter - Real-time network path monitoring tool\n\n")
-		fmt.Fprintf(os.Stderr, "Usage: netplotter [flags] --target <host>\n")
-		fmt.Fprintf(os.Stderr, "       netplotter [flags] --targets a,b,c\n\n")
+		fmt.Fprintf(os.Stderr, "rp - Real-time network path monitoring tool\n\n")
+		fmt.Fprintf(os.Stderr, "Usage: rp [flags] --target <host>\n")
+		fmt.Fprintf(os.Stderr, "       rp [flags] --targets a,b,c\n\n")
 		fmt.Fprintf(os.Stderr, "Flags:\n")
 		flag.PrintDefaults()
 		fmt.Fprintf(os.Stderr, "\nExamples:\n")
-		fmt.Fprintf(os.Stderr, "  netplotter --target 8.8.8.8\n")
-		fmt.Fprintf(os.Stderr, "  netplotter --targets 8.8.8.8,1.1.1.1\n")
-		fmt.Fprintf(os.Stderr, "  netplotter --target google.com --protocol tcp --port 443\n")
-		fmt.Fprintf(os.Stderr, "  netplotter --target 1.1.1.1 --interval 500 --max-hops 20\n")
-		fmt.Fprintf(os.Stderr, "  netplotter --target 8.8.8.8 --export-json desktop\n")
-		fmt.Fprintf(os.Stderr, "  netplotter --target 8.8.8.8 --export-csv desktop --export-txt desktop\n")
+		fmt.Fprintf(os.Stderr, "  rp --target 8.8.8.8\n")
+		fmt.Fprintf(os.Stderr, "  rp --targets 8.8.8.8,1.1.1.1\n")
+		fmt.Fprintf(os.Stderr, "  rp --target google.com --protocol tcp --port 443\n")
+		fmt.Fprintf(os.Stderr, "  rp --target 1.1.1.1 --interval 500 --max-hops 20\n")
+		fmt.Fprintf(os.Stderr, "  rp --target 8.8.8.8 --export-json desktop\n")
+		fmt.Fprintf(os.Stderr, "  rp --target 8.8.8.8 --export-csv desktop --export-txt desktop\n")
 	}
 
 	flag.Parse()
@@ -235,13 +235,13 @@ func Parse() (*Config, error) {
 
 	desktop := DesktopDir()
 	if cfg.ExportJSON == "desktop" {
-		cfg.ExportJSON = filepath.Join(desktop, "netplotter.json")
+		cfg.ExportJSON = filepath.Join(desktop, "rp.json")
 	}
 	if cfg.ExportCSV == "desktop" {
-		cfg.ExportCSV = filepath.Join(desktop, "netplotter.csv")
+		cfg.ExportCSV = filepath.Join(desktop, "rp.csv")
 	}
 	if cfg.ExportTXT == "desktop" {
-		cfg.ExportTXT = filepath.Join(desktop, "netplotter.txt")
+		cfg.ExportTXT = filepath.Join(desktop, "rp.txt")
 	}
 
 	return cfg, cfg.Validate()
@@ -305,11 +305,11 @@ func (c *Config) Validate() error {
 
 func printShortHelp() {
 	out := os.Stdout
-	fmt.Fprintln(out, "netplotter - Real-time network path monitoring tool")
+	fmt.Fprintln(out, "rp - Real-time network path monitoring tool")
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Usage:")
-	fmt.Fprintln(out, "  netplotter --target <host>")
-	fmt.Fprintln(out, "  netplotter --targets a,b,c")
+	fmt.Fprintln(out, "  rp --target <host>")
+	fmt.Fprintln(out, "  rp --targets a,b,c")
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Core Options:")
 	fmt.Fprintln(out, "  --target <host>              Single target")
@@ -321,9 +321,9 @@ func printShortHelp() {
 	fmt.Fprintln(out, "  Q    Quit the app")
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Examples:")
-	fmt.Fprintln(out, "  netplotter --target 8.8.8.8")
-	fmt.Fprintln(out, "  netplotter --targets 8.8.8.8,1.1.1.1 --view loss")
-	fmt.Fprintln(out, "  netplotter --target google.com --protocol tcp --port 443")
+	fmt.Fprintln(out, "  rp --target 8.8.8.8")
+	fmt.Fprintln(out, "  rp --targets 8.8.8.8,1.1.1.1 --view loss")
+	fmt.Fprintln(out, "  rp --target google.com --protocol tcp --port 443")
 	fmt.Fprintln(out, "")
 	fmt.Fprintln(out, "Full flag list: --help flags")
 }

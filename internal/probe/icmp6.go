@@ -72,7 +72,7 @@ func (p *ICMPv6Prober) Probe(ctx context.Context, target net.IP, ttl int, seq ui
 		Body: &icmp.Echo{
 			ID:   int(p.id),
 			Seq:  int(seq),
-			Data: []byte("netplotter-ipv6-000000000000000000"),
+			Data: []byte("rp-ipv6-000000000000000000"),
 		},
 	}
 

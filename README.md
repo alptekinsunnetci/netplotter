@@ -1,8 +1,8 @@
-# netplotter
+# rp
 
 A real-time, terminal-based network path monitoring tool written in Go.
 
-![netplotter](./netplotter.png)
+![rp](./netplotter.png)
 ---
 
 ## Features
@@ -40,13 +40,13 @@ A real-time, terminal-based network path monitoring tool written in Go.
 
 ```bash
 # Requires Go 1.22+
-go build -o netplotter ./cmd/netplotter
+go build -o rp ./cmd/rp
 
 # Cross-compile for all platforms
-GOOS=windows GOARCH=amd64 go build -o netplotter-windows-amd64.exe ./cmd/netplotter
-GOOS=linux   GOARCH=amd64 go build -o netplotter-linux-amd64        ./cmd/netplotter
-GOOS=darwin  GOARCH=amd64 go build -o netplotter-macos-amd64        ./cmd/netplotter
-GOOS=darwin  GOARCH=arm64 go build -o netplotter-macos-arm64        ./cmd/netplotter
+GOOS=windows GOARCH=amd64 go build -o rp-windows-amd64.exe ./cmd/rp
+GOOS=linux   GOARCH=amd64 go build -o rp-linux-amd64        ./cmd/rp
+GOOS=darwin  GOARCH=amd64 go build -o rp-macos-amd64        ./cmd/rp
+GOOS=darwin  GOARCH=arm64 go build -o rp-macos-arm64        ./cmd/rp
 ```
 
 ---
@@ -54,13 +54,13 @@ GOOS=darwin  GOARCH=arm64 go build -o netplotter-macos-arm64        ./cmd/netplo
 ## Usage
 
 ```
-netplotter [flags] [target]
+rp [flags] [target]
 ```
 
 If no target is provided, you will be prompted interactively:
 
 ```
-$ ./netplotter
+$ ./rp
 Target host or IP: 8.8.8.8
 ```
 
@@ -106,40 +106,40 @@ If `--targets` is provided, it overrides `--target` and the positional argument.
 
 ```bash
 # Start without specifying a target (interactive prompt)
-sudo ./netplotter
+sudo ./rp
 
 # Basic ICMP monitoring
-sudo ./netplotter --target 8.8.8.8
+sudo ./rp --target 8.8.8.8
 
 # Positional argument (no --target flag needed)
-sudo ./netplotter 1.1.1.1
+sudo ./rp 1.1.1.1
 
 # TCP mode — no elevated privileges required
-./netplotter --target google.com --protocol tcp --port 443
+./rp --target google.com --protocol tcp --port 443
 
 # Multi-target panels
-sudo ./netplotter --targets 8.8.8.8,1.1.1.1
+sudo ./rp --targets 8.8.8.8,1.1.1.1
 
 # Fast probing with JSON export
-sudo ./netplotter --target 1.1.1.1 --interval 500 --export-json /tmp/results.json
+sudo ./rp --target 1.1.1.1 --interval 500 --export-json /tmp/results.json
 
 # Diff view (compare against a previous JSON export)
-sudo ./netplotter --target 1.1.1.1 --diff-file /tmp/results.json
+sudo ./rp --target 1.1.1.1 --diff-file /tmp/results.json
 
 # More hops, no color
-sudo ./netplotter --target 8.8.8.8 --max-hops 20 --no-color
+sudo ./rp --target 8.8.8.8 --max-hops 20 --no-color
 
 # Show developer info
-./netplotter --info
+./rp --info
 
 # IPv6 traceroute (auto-detect from DNS AAAA record)
-sudo ./netplotter --target google.com --ipv6
+sudo ./rp --target google.com --ipv6
 
 # IPv6 only mode (fails if no IPv6 address)
-sudo ./netplotter --target ipv6.google.com --ipv6-only
+sudo ./rp --target ipv6.google.com --ipv6-only
 
 # IPv6 full address format
-sudo ./netplotter --target 2001:4860:4860::8888 --ipv6-format full
+sudo ./rp --target 2001:4860:4860::8888 --ipv6-format full
 ```
 
 ---
@@ -147,7 +147,7 @@ sudo ./netplotter --target 2001:4860:4860::8888 --ipv6-format full
 ## Sample Output
 
 ```
-netplotter — 8.8.8.8  │  uptime: 2m14s
+rp — 8.8.8.8  │  uptime: 2m14s
 
 Hop  IP Address        Hostname                     Loss%   Last    Avg     Min     Max     Jitter  Graph
 ────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -179,8 +179,8 @@ Keys: P=Pause  S=Sort  V=View  +/-=Zoom  R=Reset  Q=Quit  e2e loss: 2.1%  (1500 
 ## Project Structure
 
 ```
-netplotter/
-├── cmd/netplotter/main.go              # Entry point, goroutine orchestration
+rp/
+├── cmd/rp/main.go              # Entry point, goroutine orchestration
 ├── internal/
 │   ├── config/config.go               # CLI flag parsing and validation
 │   ├── probe/

@@ -76,7 +76,7 @@ func (p *WindowsICMPv6Prober) Probe(
 
 	opts := ipOptionInformation6{Ttl: uint8(ttl)}
 
-	reqData := []byte("netplotter-ipv6-probe-data-padding")
+	reqData := []byte("rp-ipv6-probe-data-padding")
 
 	replyBuf := make([]byte, int(unsafe.Sizeof(icmp6EchoReply{}))+len(reqData)+8+16)
 

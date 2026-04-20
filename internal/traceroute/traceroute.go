@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/alptekinsunnetci/netplotter/internal/probe"
+	"github.com/TRNOG/rp/internal/probe"
 )
 
 // Options controls traceroute behaviour.

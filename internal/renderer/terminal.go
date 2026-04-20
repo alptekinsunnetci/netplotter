@@ -10,8 +10,8 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/alptekinsunnetci/netplotter/internal/config"
-	"github.com/alptekinsunnetci/netplotter/internal/metrics"
+	"github.com/TRNOG/rp/internal/config"
+	"github.com/TRNOG/rp/internal/metrics"
 )
 
 // ANSI escape codes
@@ -147,7 +147,7 @@ func (r *TerminalRenderer) Render(panels []Panel) {
 // ── Private helpers ──────────────────────────────────────────────────────────
 
 func (r *TerminalRenderer) buildHeader(title string, sum metrics.SessionSummary, routeChanged bool, paused bool) []string {
-	header := r.color(ansiBold+ansiCyan, "netplotter") + " — " +
+	header := r.color(ansiBold+ansiCyan, "rp") + " — " +
 		r.color(ansiWhite, title) +
 		"  │  uptime: " + r.color(ansiGreen, formatDuration(sum.Duration))
 

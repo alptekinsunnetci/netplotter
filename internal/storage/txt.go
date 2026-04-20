@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alptekinsunnetci/netplotter/internal/metrics"
+	"github.com/TRNOG/rp/internal/metrics"
 )
 
 type TXTExporter struct {
@@ -25,7 +25,7 @@ func NewTXTExporter(path string) (*TXTExporter, error) {
 func (e *TXTExporter) Export(snaps []metrics.HopSnapshot, summary metrics.SessionSummary) error {
 	var b strings.Builder
 
-	b.WriteString(fmt.Sprintf("netplotter export — %s\n", time.Now().UTC().Format(time.RFC3339)))
+	b.WriteString(fmt.Sprintf("rp export — %s\n", time.Now().UTC().Format(time.RFC3339)))
 	b.WriteString(fmt.Sprintf("Target: %s\n", summary.Target))
 	b.WriteString(fmt.Sprintf("Uptime: %s\n", fmtDurTXT(summary.Duration)))
 	b.WriteString(fmt.Sprintf("Sent: %d  Recv: %d  Loss: %.1f%%  Route Changes: %d\n",

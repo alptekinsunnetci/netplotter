@@ -2,7 +2,7 @@
 package renderer
 
 import (
-	"github.com/alptekinsunnetci/netplotter/internal/metrics"
+	"github.com/TRNOG/rp/internal/metrics"
 )
 
 // Panel is a renderable target view.
